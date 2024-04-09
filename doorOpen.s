@@ -24,10 +24,10 @@
 	IMPORT	USART2_Write
 	
 	AREA    main, CODE, READONLY
-	EXPORT	__main				; make __main visible to linker
+	EXPORT	doorOpen				; make __main visible to linker
 	ENTRY			
 				
-__main	PROC
+doorOpen	PROC
 	LDR r0, =RCC_BASE
 	LDR r1, [r0, #RCC_AHB2ENR]
 	AND r1, #0xFFFFFFFA			;clear

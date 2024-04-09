@@ -24,10 +24,10 @@
 	IMPORT	USART2_Write
 	
 	AREA    main, CODE, READONLY
-	EXPORT	__main				; make __main visible to linker
+	EXPORT	doorClose				; make __main visible to linker
 	ENTRY			
 				
-__main	PROC
+doorClose	PROC
 		
 	;enable clocks for C (buttons) and B (motor output)
 	LDR r0, =RCC_BASE

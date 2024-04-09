@@ -21,22 +21,16 @@
 	IMPORT 	UART2_Init
 	IMPORT	USART2_Write
 	
+	IMPORT doorOpen  ;Changed some code in callum's files
+	IMPORT doorClose
+
 	AREA    main, CODE, READONLY
 	EXPORT	__main				; make __main visible to linker
 	ENTRY			
 				
 __main	PROC
 	
-	;	Enable clocks for GPIOC, GPIOB//;	Enable clocks for GPIOA, GPIOB
-		
-	; Set GPIOC pin 13 (blue button) as an input pin//; Set GPIOA pin 0 (center joystick button) as an input pin
 	
-	; Set GPIOB pins 2, 3, 6, 7 as output pins
-	
-	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	;;;;;;;;;; YOUR CODE GOES HERE ;;;;;;;;;;;;;;;
-	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;		
-		
 	ENDP		
 		
 	
