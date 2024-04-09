@@ -1,0 +1,21 @@
+Main:
+    Init memory for floor direction. 
+    Init memory for floor storage
+    Set up flags for calls
+
+While:
+At a given floor
+    From current floor +- (direction) to max/min
+    Check for calls from those floors
+
+    If floor is a destination or is called in same direction
+    Open doors. Check for hold open or hold close
+    If not
+    Move in direction
+
+If no calls, 
+    Clear direction. 
+    Or just keep flip flopping directions looking for calls
+If top/bottom 
+    reverse direction
+

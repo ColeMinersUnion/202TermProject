@@ -31,6 +31,12 @@
 __main	PROC
 	
 	
+	;Variables used by the rest of the program
+	
+
+
+
+
 	ENDP		
 		
 	
