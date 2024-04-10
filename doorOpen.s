@@ -24,50 +24,55 @@
 	IMPORT	USART2_Write
 	
 	AREA    main, CODE, READONLY
-	EXPORT	doorOpen				; make __main visible to linker
+	EXPORT	__main				; make __main visible to linker
 	ENTRY			
 				
-doorOpen	PROC
+__main	PROC
 	LDR r0, =RCC_BASE
 	LDR r1, [r0, #RCC_AHB2ENR]
-	AND r1, #0xFFFFFFFA			;clear
-	ORR r1, #0x00000006			;set
+	AND r1, #0xFFFFFFFB			;clear
+	ORR r1, #0x00000004			;set
 	STR r1, [r0, #RCC_AHB2ENR]
 	
-	;configure b to digital out for motor control
-	LDR r0, =GPIOB_BASE
+	;configure c to digital out for motor control, pins c5, 6, 8, 9 
+	LDR r0, =GPIOC_BASE
 	LDR r1, [r0, #GPIO_MODER]
-	AND r1, #0x0000		;clear
+	AND r1, #0x00000000		;clear
 	ORR r1, #0x00000005		;r1 = 0005	;this is all due to size constraints on immediates
-	LSL r1, #8				;r1 = 0500
-	ORR r1, #0x00000005		;r1 = 0505
-	LSL r1, #4				;r1 = 5050
-	;pins 7, 6, 3, 2
+	LSL r1, #4				;r1 = 0050
+	ORR r1, #0x00000001		;r1 = 0051
+	LSL r1, #4		;r1 = 00510
+	ORR r1, #00000004	;r1 = 00514
+	LSL r1, #8		;r1 = 51400
+	;pins 5, 6, 8, 9
+	STR r1, [r0, #GPIO_MODER]	
+	
 	
 close	MOV r2, #255		
 comp1	CMP r2, #0
 		BEQ stop
 		
-motor	LDR r0, =GPIOB_BASE
+motor		;branch to teraterm somehwere here???
+		LDR r0, =GPIOC_BASE
 		LDR r1, [r0, #GPIO_ODR]
-		ORR r1, #0x00000048	;first step, AB'
+		ORR r1, #0x00000220	;first step, AB'
 		STR r1, [r0, #GPIO_ODR]
 		BL delay
 		AND r1, #0x00000000	;reset
 		STR r1, [r0, #GPIO_ODR]
 		
-		LDR r0, =GPIOB_BASE
+		LDR r0, =GPIOC_BASE
 		LDR r1, [r0, #GPIO_ODR]
-		ORR r1, #0x00000044	;second step, AB
+		ORR r1, #0x00000060	;second step, AB
 		STR r1, [r0, #GPIO_ODR]
 		BL delay
 		AND r1, #0x00000000	;reset
 		STR r1, [r0, #GPIO_ODR]
 
 		
-		LDR r0, =GPIOB_BASE
+		LDR r0, =GPIOC_BASE
 		LDR r1, [r0, #GPIO_ODR]
-		ORR r1, #0x00000084	;third step, A'B
+		ORR r1, #0x00000140	;third step, A'B
 		STR r1, [r0, #GPIO_ODR]
 		BL delay
 		AND r1, #0x00000000	;reset
@@ -75,9 +80,9 @@ motor	LDR r0, =GPIOB_BASE
 
 
 		
-		LDR r0, =GPIOB_BASE
+		LDR r0, =GPIOC_BASE
 		LDR r1, [r0, #GPIO_ODR]
-		ORR r1, #0x00000088	;third step, A'B'
+		ORR r1, #0x00000300	;third step, A'B'
 		STR r1, [r0, #GPIO_ODR]
 		BL delay
 		AND r1, #0x00000000	;reset
