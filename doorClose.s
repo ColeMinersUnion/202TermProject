@@ -13,8 +13,7 @@
 ;           http:;www.eece.maine.edu/~zhu/book
 ;*******************************************************************************
 
-;this be the program that run when the elevator arriveth at a floor, pressing destination floor would cause an interupt that stores floor on stakc and then -after- this is done would go to said floor\
-;this section does nothing if the elevator is in motion
+;this program is called when the elevator arrives at the floor and after it is ready to leave
 	INCLUDE core_cm4_constants.s		; Load Constant Definitions
 	INCLUDE stm32l476xx_constants.s      
 
@@ -29,37 +28,35 @@
 				
 doorClose	PROC
 		
-	;enable clocks for C (buttons) and B (motor output)
+	;enable clocks for C (door motor)
 	LDR r0, =RCC_BASE
 	LDR r1, [r0, #RCC_AHB2ENR]
-	AND r1, #0xFFFFFFFA			;clear
-	ORR r1, #0x00000006			;set
+	AND r1, #0xFFFFFFFB			;clear
+	ORR r1, #0x00000004			;set
 	STR r1, [r0, #RCC_AHB2ENR]
 	
-	;configure b to digital out for motor control
-	LDR r0, =GPIOB_BASE
+	;configure c to digital out for motor control, pins c5, 6, 8, 9 
+	LDR r0, =GPIOC_BASE
 	LDR r1, [r0, #GPIO_MODER]
-	AND r1, #0x0000		;clear
+	AND r1, #0x00000000		;clear
 	ORR r1, #0x00000005		;r1 = 0005	;this is all due to size constraints on immediates
-	LSL r1, #8				;r1 = 0500
-	ORR r1, #0x00000005		;r1 = 0505
-	LSL r1, #4				;r1 = 5050
-	;pins 7, 6, 3, 2
+	LSL r1, #4				;r1 = 0050
+	ORR r1, #0x00000001		;r1 = 0051
+	LSL r1, #4		;r1 = 00510
+	ORR r1, #00000004	;r1 = 00514
+	LSL r1, #8		;r1 = 51400
+	;pins 5, 6, 8, 9
+	STR r1, [r0, #GPIO_MODER]
 	
-	;will not need this when reading from numpad thang
-	; Set GPIOC pin 13 (blue button) as an input pin
-	;LDR r0, =GPIOC_BASE
-	;LDR r1, [r0, #GPIO_MODER]
-	;AND r1, #0xF3FFFFFF			;clear
-	;ORR r1, #0x00000000			
-	;STR	r1, [r0, #GPIO_MODER]
-
 	;delay loop, holds for some amount of time
 		MOV r1, #0x9999				;??
 		;this line would compare for the close button and branch straight to motor
 hold	CMP r1, #0
 		BEQ close
-		;put comps for close button here
+		;if hold has been pressed r5, bit 0x00000010
+		ORR r1, r5, #0x00000010		;isolate for just desired pin
+		CMP r1, #0x00000010
+		BEQ holdB
 		SUB r1, #1
 		B hold
 	
@@ -67,36 +64,34 @@ close	MOV r2, #255
 comp1	CMP r2, #0
 		BEQ stop
 
-holdB	;LDR r0, =GPIOC_BASE	;using blue button as hold (pin 13)
-		;LDR r1, [r0, #GPIO_IDR]
-		;AND r1, #0x00002000
-		;CMP r1, #0x00002000
-		;this line would comp the register with value for hold pressed
-		BNE motor						;button is pressed
+holdB		ORR r1, r5, #0x00000010		;isolate for desired pin
+		CMP r1, #0x00000010
+		BNE motor			;button is pressed
 		CMP r2, #255	
-		BEQ holdB						;door is already open, just check again
-		B	comp2						;door is partially open, needs to be fully opened
+		BEQ holdB		;door is already open, just check again
+		B	comp2		;door is partially open, needs to be fully opened
 
-motor	LDR r0, =GPIOB_BASE
+motor		;branch to teraterm somehwere here?
+		LDR r0, =GPIOC_BASE
 		LDR r1, [r0, #GPIO_ODR]
-		ORR r1, #0x00000084	;first step, AB'
+		ORR r1, #0x00000220	;first step, AB'
 		STR r1, [r0, #GPIO_ODR]
 		BL delay
 		AND r1, #0x00000000	;reset
 		STR r1, [r0, #GPIO_ODR]
 		
-		LDR r0, =GPIOB_BASE
+		LDR r0, =GPIOC_BASE
 		LDR r1, [r0, #GPIO_ODR]
-		ORR r1, #0x00000044	;second step, AB
+		ORR r1, #0x00000060	;second step, AB
 		STR r1, [r0, #GPIO_ODR]
 		BL delay
 		AND r1, #0x00000000	;reset
 		STR r1, [r0, #GPIO_ODR]
 
 		
-		LDR r0, =GPIOB_BASE
+		LDR r0, =GPIOC_BASE
 		LDR r1, [r0, #GPIO_ODR]
-		ORR r1, #0x00000048	;third step, A'B
+		ORR r1, #0x00000140	;third step, A'B
 		STR r1, [r0, #GPIO_ODR]
 		BL delay
 		AND r1, #0x00000000	;reset
@@ -104,9 +99,9 @@ motor	LDR r0, =GPIOB_BASE
 
 
 		
-		LDR r0, =GPIOB_BASE
+		LDR r0, =GPIOC_BASE
 		LDR r1, [r0, #GPIO_ODR]
-		ORR r1, #0x00000088	;third step, A'B'
+		ORR r1, #0x00000300	;third step, A'B'
 		STR r1, [r0, #GPIO_ODR]
 		BL delay
 		AND r1, #0x00000000	;reset
@@ -126,9 +121,10 @@ ds		SUB r3, #1
 comp2	CMP r2, #0
 		BEQ close			;door fully open, reload the number and check if button is still held
 		
-reverse	LDR r0, =GPIOB_BASE
+reverse		;branch to teraterm here
+		LDR r0, =GPIOC_BASE
 		LDR r1, [r0, #GPIO_ODR]
-		ORR r1, #0x00000048	;first step, A'B
+		ORR r1, #0x00000140	;first step, A'B
 		STR r1, [r0, #GPIO_ODR]
 		BL delay
 		AND r1, #0x00000000	;reset
@@ -136,9 +132,9 @@ reverse	LDR r0, =GPIOB_BASE
 
 
 		
-		LDR r0, =GPIOB_BASE
+		LDR r0, =GPIOC_BASE
 		LDR r1, [r0, #GPIO_ODR]
-		ORR r1, #0x00000044	;second step, AB
+		ORR r1, #0x00000060	;second step, AB
 		STR r1, [r0, #GPIO_ODR]
 		BL delay
 		AND r1, #0x00000000	;reset
@@ -146,9 +142,9 @@ reverse	LDR r0, =GPIOB_BASE
 
 
 		
-		LDR r0, =GPIOB_BASE
+		LDR r0, =GPIOC_BASE
 		LDR r1, [r0, #GPIO_ODR]
-		ORR r1, #0x00000084	;third step, AB'
+		ORR r1, #0x00000220	;third step, AB'
 		STR r1, [r0, #GPIO_ODR]
 		BL delay
 		AND r1, #0x00000000	;reset
@@ -156,9 +152,9 @@ reverse	LDR r0, =GPIOB_BASE
 
 
 		
-		LDR r0, =GPIOB_BASE
+		LDR r0, =GPIOC_BASE
 		LDR r1, [r0, #GPIO_ODR]
-		ORR r1, #0x00000088	;third step, A'B'
+		ORR r1, #0x00000300	;third step, A'B'
 		STR r1, [r0, #GPIO_ODR]
 		BL delay
 		AND r1, #0x00000000	;reset
