@@ -1,6 +1,6 @@
 ;******************** (C) Yifeng ZHU *******************************************
 ; @file    main.s
-; @author  Yifeng Zhu
+; @author  Yifeng Zhu 
 ; @date    May-17-2015
 ; @note
 ;           This code is for the book "Embedded Systems with ARM Cortex-M 
