@@ -22,11 +22,11 @@
 	IMPORT 	UART2_Init
 	IMPORT	USART2_Write
 	
-	AREA    main, CODE, READONLY
+	AREA    doorClose, CODE, READONLY
 	EXPORT	doorClose				; make __main visible to linker
 	ENTRY			
 				
-doorClose	PROC
+doorclose	PROC
 		
 	;enable clocks for C (door motor)
 	LDR r0, =RCC_BASE
