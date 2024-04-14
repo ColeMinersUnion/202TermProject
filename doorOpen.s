@@ -13,7 +13,7 @@
 ;           http:;www.eece.maine.edu/~zhu/book
 ;*******************************************************************************
 
-;this be the program that run when the elevator arriveth at a floor, pressing destination floor would cause an interupt that stores floor on stakc and then -after- this is done would go to said floor\
+;this be the program that run when the elevator arriveth at a floor, pressing destination floor would cause an interupt that stores floor on stakc and then -after- this is done would go to said floor
 ;this section does nothing if the elevator is in motion
 	INCLUDE core_cm4_constants.s		; Load Constant Definitions
 	INCLUDE stm32l476xx_constants.s      
@@ -23,11 +23,11 @@
 	IMPORT 	UART2_Init
 	IMPORT	USART2_Write
 	
-	AREA    main, CODE, READONLY
-	EXPORT	__main				; make __main visible to linker
-	ENTRY			
+	AREA    doorOpen, CODE, READONLY
+	EXPORT	doorOpen				; make __main visible to linker
+	ENTRY		
 				
-__main	PROC
+dooropen	PROC
 	LDR r0, =RCC_BASE
 	LDR r1, [r0, #RCC_AHB2ENR]
 	AND r1, #0xFFFFFFFB			;clear
