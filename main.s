@@ -41,6 +41,25 @@ __main	PROC
 	ORR r1, #0x0000DB00	;set
 	STR r1, [r0, #GPIO_MODER]
 	
+	;set up gpio c and b for keypad
+	
+	;enable clock to gpio c and b
+	LDR r0, =RCC_BASE
+	LDR r1, [r0, #RCC_AHB2ENR]
+	ORR r1, #0x00000006			;set
+	STR r1, [r0, #RCC_AHB2ENR]
+	;configure port c to digital output
+	LDR r0, =GPIOC_BASE
+	LDR r1, [r0, #GPIO_MODER]
+	ORR r1, #0x00000055			;set
+	STR r1, [r0, #GPIO_MODER]
+	;configure port b to digital input
+	LDR r0, =GPIOB_BASE
+	LDR r1, [r0, #GPIO_MODER]
+	BIC r1, r3
+	AND r1, #0x00000000			;set
+	STR r1, [r0, #GPIO_MODER]
+
 	
 	;
 	;Variables used by the rest of the program
