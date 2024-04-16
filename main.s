@@ -92,7 +92,7 @@ upFloor
 	;reset floor
 	AND r5, #0xFFF0FFFF
 	LSL r7, #0x11
-	OR r5, r5, r7
+	ORR r5, r5, r7
 	;turn on next floor
 	;turn off previous destination and previous calls
 
