@@ -1,6 +1,6 @@
 ;******************** (C) Yifeng ZHU *******************************************
 ; @file    main.s
-; @author  Yifeng Zhu 
+; @author  Yifeng Zhu
 ; @date    May-17-2015
 ; @note
 ;           This code is for the book "Embedded Systems with ARM Cortex-M 
@@ -71,7 +71,8 @@ holdB		ORR r1, r5, #0x00000010		;isolate for desired pin
 		BEQ holdB		;door is already open, just check again
 		B	comp2		;door is partially open, needs to be fully opened
 
-motor		;branch to teraterm somehwere here?
+motor		
+		BL display
 		LDR r0, =GPIOC_BASE
 		LDR r1, [r0, #GPIO_ODR]
 		ORR r1, #0x00000220	;first step, AB'
@@ -121,7 +122,8 @@ ds		SUB r3, #1
 comp2	CMP r2, #0
 		BEQ close			;door fully open, reload the number and check if button is still held
 		
-reverse		;branch to teraterm here
+reverse		
+		;BL display ;opening ;branch to teraterm here
 		LDR r0, =GPIOC_BASE
 		LDR r1, [r0, #GPIO_ODR]
 		ORR r1, #0x00000140	;first step, A'B
@@ -165,6 +167,13 @@ reverse		;branch to teraterm here
 
 		SUB r2, #1			;decrement counter
 		B comp2
+		
+display
+	LDR r0, =str   ; First argument
+	MOV r1, #1    ; Second argument
+	BL USART2_Write
+	
+	BX LR
 
 	
 	
@@ -175,5 +184,6 @@ stop 	B 		stop     		; dead loop
 
 	AREA myData, DATA, READWRITE
 	ALIGN
+str DCB	"Closing\r\n", 0
 
 	END
