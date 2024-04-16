@@ -23,6 +23,8 @@
 	
 	IMPORT doorOpen  ;Changed some code in callum's files
 	IMPORT doorClose
+	IMPORT MoveUp
+	IMPORT MoveDown
 
 	AREA    main, CODE, READONLY
 	EXPORT	__main				; make __main visible to linker
@@ -145,13 +147,13 @@ upFlags
 openSesame
 	BL seven
 	BL doorOpen
-	BL keypad
+	;BL keypad
 	BL doorClose
 	;where after here?
 	;B while??
 	
 downFloor
-	BL downloop
+	BL MoveDown
 	;reset floor
 	AND r5, #0xFFF0FFFF
 	LSL r7, #0x09
@@ -160,7 +162,7 @@ downFloor
 	;turn off previous destination and previous calls
 	
 upFloor
-	BL uploop
+	BL MoveUp
 	;reset floor
 	AND r5, #0xFFF0FFFF
 	LSL r7, #0x11
