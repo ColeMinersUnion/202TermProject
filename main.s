@@ -37,10 +37,10 @@ __main	PROC
 
 	;using r7 as my working register
 	;r7 now stores the current floor
-while STR r7, [r5, #0x000F0000]
+while AND r7, r5, #0x000F0000
 	; check if the current floor is a destination
 	; or if it is called in the direction
-	STR r8, [r5, #0x00000001]
+	AND r8, r5, #0x00000001
 	CMP r8, #0x1
 	BNE downFlags
 	BEQ upFlags
@@ -51,7 +51,7 @@ midWhile
 	CMP r9, r7
 	BEQ openSesame
 
-	STR r9, [r5, #0x0000F000]
+	AND r9, r5, #0x0000F000
 	LSR r9, #0xC
 	CMP r9, r7
 	BEQ openSesame
@@ -63,25 +63,38 @@ midWhile
 	;Update LEDs and character display here
 	B while
 downFlags
-	STR r9, [r6, #0xF0]
-	LSR r9, 4 
+	AND r9, #0x00000000
+	AND r9, r6, #0xF0
+	LSR r9, #0x4 
 	B midWhile	
 	
 upFlags
-	STR r9, [r6, #0xF]
+	AND r9, #0x00000000
+	AND r9, r6, #0xF
 	B midWhile	
 
 openSesame
 	BL doorOpen
 	BL keypad
 	BL doorClose
-	;reset the floors
-	EOR r5, 
-
+	
 downFloor
-	BL
+	BL downloop
+	;reset floor
+	AND r5, #0xFFF0FFFF
+	LSL r7, #0x09
+	OR r5, r5, r7
+	;turn on next floor
+	;turn off previous destination and previous calls
+	
 upFloor
-
+	BL uploop
+	;reset floor
+	AND r5, #0xFFF0FFFF
+	LSL r7, #0x11
+	OR r5, r5, r7
+	;turn on next floor
+	;turn off previous destination and previous calls
 
 
 	ENDP		
