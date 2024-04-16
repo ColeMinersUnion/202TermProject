@@ -28,6 +28,9 @@
 	ENTRY		
 				
 dooropen	PROC
+	BL UART2_Init
+	BL display
+	;terraterm here opening
 	LDR r0, =RCC_BASE
 	LDR r1, [r0, #RCC_AHB2ENR]
 	AND r1, #0xFFFFFFFB			;clear
@@ -53,6 +56,7 @@ comp1	CMP r2, #0
 		BEQ stop
 		
 motor		;branch to teraterm somehwere here???
+		;BL display
 		LDR r0, =GPIOC_BASE
 		LDR r1, [r0, #GPIO_ODR]
 		ORR r1, #0x00000220	;first step, AB'
@@ -100,10 +104,18 @@ ds		SUB r3, #1
 		
 stop 	B 		stop     		; dead loop
 
+display
+	LDR r0, =str   ; First argument
+	MOV r1, #1    ; Second argument
+	BL USART2_Write
+	
+	BX LR
+
 	ENDP
 								
 
 	AREA myData, DATA, READWRITE
 	ALIGN
+str	"DCB	Opening\r\n", 0
 
 	END
