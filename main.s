@@ -30,10 +30,57 @@
 				
 __main	PROC
 	
-	
+	;
 	;Variables used by the rest of the program
-	
+	MOV r5, #0x00000000
+	MOV r6, #0x00000000 
 
+	;using r7 as my working register
+	;r7 now stores the current floor
+while STR r7, [r5, #0x000F0000]
+	; check if the current floor is a destination
+	; or if it is called in the direction
+	STR r8, [r5, #0x00000001]
+	CMP r8, #0x1
+	BNE downFlags
+	BEQ upFlags
+midWhile
+	;flags set onto r9
+	LSR r7, #0x10
+	AND r9, r9, r7
+	CMP r9, r7
+	BEQ openSesame
+
+	STR r9, [r5, #0x0000F000]
+	LSR r9, #0xC
+	CMP r9, r7
+	BEQ openSesame
+
+	CMP r8, #0x1
+	BNE downFloor
+	BEQ upFloor
+
+	;Update LEDs and character display here
+	B while
+downFlags
+	STR r9, [r6, #0xF0]
+	LSR r9, 4 
+	B midWhile	
+	
+upFlags
+	STR r9, [r6, #0xF]
+	B midWhile	
+
+openSesame
+	BL doorOpen
+	BL keypad
+	BL doorClose
+	;reset the floors
+	EOR r5, 
+
+downFloor
+	BL
+upFloor
 
 
 
