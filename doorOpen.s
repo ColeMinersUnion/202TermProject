@@ -28,6 +28,7 @@
 	ENTRY		
 				
 dooropen	PROC
+	PUSH {LR}
 	BL UART2_Init
 	BL display
 	;terraterm here opening
@@ -40,20 +41,20 @@ dooropen	PROC
 	;configure c to digital out for motor control, pins c5, 6, 8, 9 
 	LDR r0, =GPIOC_BASE
 	LDR r1, [r0, #GPIO_MODER]
-	AND r1, #0x00000000		;clear
-	ORR r1, #0x00000005		;r1 = 0005	;this is all due to size constraints on immediates
-	LSL r1, #4				;r1 = 0050
-	ORR r1, #0x00000001		;r1 = 0051
-	LSL r1, #4		;r1 = 00510
-	ORR r1, #00000004	;r1 = 00514
-	LSL r1, #8		;r1 = 51400
+	BIC r1, #0xF0000
+	BIC r1, #0x3000
+	BIC r1, #0xC00
+	ORR r1, #0x50000
+	ORR r1, #0x1000
+	ORR r1, #0x400
 	;pins 5, 6, 8, 9
 	STR r1, [r0, #GPIO_MODER]	
 	
 	
-close	MOV r2, #255		
+close	MOV r2, #0x80		
 comp1	CMP r2, #0
-		BEQ stop
+		POPEQ {LR}
+		BXEQ LR
 		
 motor		;branch to teraterm somehwere here???
 		;BL display
@@ -95,20 +96,18 @@ motor		;branch to teraterm somehwere here???
 		SUB r2, #1			;decrement counter
 		B comp1				;see if done yet
 		
-delay	MOV r2, #0x999
+delay	MOV r3, #0x10000
 ds		SUB r3, #1
 		CMP r3, #0x0
 		BNE ds
 		BX LR
-		
-		
-stop 	B 		stop     		; dead loop
 
 display
 	LDR r0, =str   ; First argument
 	MOV r1, #1    ; Second argument
+	PUSH {LR}
 	BL USART2_Write
-	
+	POP {LR}
 	BX LR
 
 	ENDP
@@ -116,6 +115,6 @@ display
 
 	AREA myData, DATA, READWRITE
 	ALIGN
-str	"DCB	Opening\r\n", 0
+str DCB	"Opening\r\n", 0
 
 	END
