@@ -26,6 +26,7 @@
 	IMPORT MoveUp
 	IMPORT MoveDown
 	IMPORT MoveInit
+	IMPORT KeypadInit
 
 	AREA    main, CODE, READONLY
 	EXPORT	__main				; make __main visible to linker
@@ -34,9 +35,10 @@
 __main	PROC
 	
 	;set a8, a9, a11, a12, a14, a15 as output
+	;set b10, 5, 6 15 as output
 	LDR r0, =RCC_BASE
 	LDR r1, [r0, #RCC_AHB2ENR]
-	ORR r1, #0x00000001			;set
+	ORR r1, #0x00000007			;set
 	STR r1, [r0, #RCC_AHB2ENR]
 	
 	LDR r0, =GPIOA_BASE
@@ -44,27 +46,16 @@ __main	PROC
 	ORR r1, #0x0000DB00	;set
 	STR r1, [r0, #GPIO_MODER]
 	
-	;set up gpio c and b for keypad
-	
-	;enable clock to gpio c and b
-	LDR r0, =RCC_BASE
-	LDR r1, [r0, #RCC_AHB2ENR]
-	ORR r1, #0x00000006			;set
-	STR r1, [r0, #RCC_AHB2ENR]
-	;configure port c to digital output
-	LDR r0, =GPIOC_BASE
-	LDR r1, [r0, #GPIO_MODER]
-	ORR r1, #0x00000055			;set
-	STR r1, [r0, #GPIO_MODER]
-	;configure port b to digital input
 	LDR r0, =GPIOB_BASE
 	LDR r1, [r0, #GPIO_MODER]
-	BIC r1, r3
-	AND r1, #0x00000000			;set
+	ORR r1, #0x00008460	;set
 	STR r1, [r0, #GPIO_MODER]
+	
+	
 
 	;initialize move process
 	BL MoveInit
+	BL KeypadInit
 	;
 	;Variables used by the rest of the program
 	MOV r5, #0x00000000
@@ -103,11 +94,11 @@ seven
 	LDR r0, =GPIOA_BASE
 	LDR r1, [r0, #GPIO_ODR]
 	ORR r2, r7, #0x00000003	;store first two bits of interest
-	LSR r2, #0x8			;move from bits 1,0 to bits 8,9
+	LSL r2, #0x8			;move from bits 1,0 to bits 8,9
 	ORR r1, r2				;store bits onto 8,9 of r1
 	AND r2, #0x0			;reclear
 	ORR r2, r7, #0x0000000C	;store second two bits of interest
-	LSR r2, #0x9			;move bits 2,3 to 11,12
+	LSL r2, #0x9			;move bits 2,3 to 11,12
 	ORR r1, r2				;store bits onto 11,12 of r1
 	STR r1, [r0, #GPIO_ODR]	;store onto odr
 	BX LR
@@ -151,29 +142,87 @@ openSesame		;for when elevator lands on a floor
 	BL doorOpen
 	;BL keypad ;dont think this is necessary
 	BL doorClose	;delay built in to doorClose, no need
+	;update floor call lights
+	BL callLights
 	B while		;back to start
 	
 downFloor
 	BL direction	;display direction
 	BL MoveDown
-	;reset floor
+	;updates current floor 
 	AND r5, #0xFFF0FFFF
-	LSL r7, #0x09
+	LSL r7, #0x9
 	ORR r5, r5, r7
+	BL clearFloor
+	BL checkDown
 	;turn on next floor
 	;turn off previous destination and previous calls
 	
 upFloor
 	BL direction	;display direction
 	BL MoveUp
-	;reset floor
+	;updates current floor
 	AND r5, #0xFFF0FFFF
 	LSL r7, #0x11
 	ORR r5, r5, r7
+	BL ClearFloor
+	BL checkUp
 	;turn on next floor
 	;turn off previous destination and previous calls
 
+clearFloor
+	AND r2, r7, #0x0000000F	;isolate for just location bits
+	CMP r2, #0x0000008
+	BEQ clear4
+	CMP r2, #0x0000004
+	BEQ clear3
+	CMP r2, #0x0000002
+	BEQ clear2
+	CMP r2, #0x0000001
+	BEQ clear1
+	BX LR
+	
+clear4
+	AND r5, #0xFFF7FFFF
+	BX LR
 
+clear3
+	AND r5, #0xFFFBFFFF
+	BX LR
+
+clear2
+	AND r5, #0xFFFDFFFF
+	BX LR
+
+clear1
+	AND r5, #0xFFFEFFFF
+	BX LR
+	
+	
+checkDown
+
+
+checkUp
+	
+callLights
+	MOV r3, #0x0
+	AND r3, r6, #0x00000080	;check if fl4 is called
+	LSL r3, #0x4
+	AND r3, r6, #0x00000040	;check if fl3 called
+	LSL r3, #0x3
+	AND r3, r6, #0x00000020	;check if fl2 called
+	LSL r3, #0x1
+	AND r3, r6, #0x00000010	;check if fl1 called
+	;all called floors stored on correct spot on r3 now
+	LDR r0, =GPIOB_BASE
+	LDR r1, [r0, #GPIO_ODR]
+	AND r1, #0x7B9F		;clears led bits from ODR
+	ORR r1, r3			;enables bits that are called
+	STR r1, [r0, #GPIO_ODR]		;turn them on
+	BX LR
+	
+	
+	
 	ENDP		
 		
 	
