@@ -25,6 +25,7 @@
 	IMPORT doorClose
 	IMPORT MoveUp
 	IMPORT MoveDown
+	IMPORT MoveInit
 
 	AREA    main, CODE, READONLY
 	EXPORT	__main				; make __main visible to linker
@@ -62,7 +63,8 @@ __main	PROC
 	AND r1, #0x00000000			;set
 	STR r1, [r0, #GPIO_MODER]
 
-	
+	;initialize move process
+	BL MoveInit
 	;
 	;Variables used by the rest of the program
 	MOV r5, #0x00000000
@@ -144,15 +146,15 @@ upFlags
 	AND r9, r6, #0xF
 	B midWhile	
 
-openSesame
+openSesame		;for when elevator lands on a floor
 	BL seven
 	BL doorOpen
-	;BL keypad
-	BL doorClose
-	;where after here?
-	;B while??
+	;BL keypad ;dont think this is necessary
+	BL doorClose	;delay built in to doorClose, no need
+	B while		;back to start
 	
 downFloor
+	BL direction	;display direction
 	BL MoveDown
 	;reset floor
 	AND r5, #0xFFF0FFFF
@@ -162,6 +164,7 @@ downFloor
 	;turn off previous destination and previous calls
 	
 upFloor
+	BL direction	;display direction
 	BL MoveUp
 	;reset floor
 	AND r5, #0xFFF0FFFF
