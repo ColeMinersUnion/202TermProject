@@ -154,7 +154,6 @@ downFloor
 	LSL r7, #0x9
 	ORR r5, r5, r7
 	BL clearFloor
-	BL checkDown
 	;turn on next floor
 	;turn off previous destination and previous calls
 	
@@ -165,8 +164,7 @@ upFloor
 	AND r5, #0xFFF0FFFF
 	LSL r7, #0x11
 	ORR r5, r5, r7
-	BL ClearFloor
-	BL checkUp
+	BL clearFloor
 	;turn on next floor
 	;turn off previous destination and previous calls
 
@@ -198,11 +196,7 @@ clear1
 	AND r5, #0xFFFEFFFF
 	BX LR
 	
-	
-checkDown
 
-
-checkUp
 	
 callLights
 	MOV r3, #0x0
