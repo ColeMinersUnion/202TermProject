@@ -1,29 +1,31 @@
+	INCLUDE stm32l476xx_constants.s
+	
 	AREA    Move, CODE, READONLY
-	EXPORT	Move				; make __main visible to linker
+	EXPORT  MoveInit
+	EXPORT	MoveUp
+	EXPORT  MoveDown ; make functions visible to linker
 	
 
 	; When MoveUp or MoveDown is called, the motor is either moved clockwise or counterclockwise by 360 degrees.
-	; Output pins will be A:A2, A':A3, B:A6, B':A7
+	; Output pins will be A:B11, A':B12, B:B8, B':B9
+		
 MoveUp PROC
 	
-	MOV r3, #0x100 ; Determines range of motor
+	MOV r3, #0x200 ; Determines range of motor
 	
 uploop
 	;Moves motor up
-	LDR r0, =GPIOA_BASE
-	MOV r1, #0x84 ;A high, A' low, B low, B' high
+	LDR r0, =GPIOB_BASE
+	MOV r1, #0xA00 ;A high, A' low, B low, B' high
 	STR r1, [r0, #GPIO_ODR]
 	BL movedelay
-	LDR r0, =GPIOA_BASE
-	MOV r1, #0x44 ;A high, A' low, B high, B' low
+	MOV r1, #0x900 ;A high, A' low, B high, B' low
 	STR r1, [r0, #GPIO_ODR]
 	BL movedelay
-	LDR r0, =GPIOA_BASE
-	MOV r1, #0x48 ;A low, A' high, B high, B' low
+	MOV r1, #0x1100 ;A low, A' high, B high, B' low
 	STR r1, [r0, #GPIO_ODR]
 	BL  movedelay
-	LDR r0, =GPIOA_BASE
-	MOV r1, #0x88 ;A low, A' high, B low, B' high
+	MOV r1, #0x1200 ;A low, A' high, B low, B' high
 	STR r1, [r0, #GPIO_ODR]
 	BL movedelay
 	
@@ -34,24 +36,21 @@ uploop
 		
 MoveDown PROC
 	
-	MOV r3, #0x100 ; Determines range of motor
+	MOV r3, #0x200 ; Determines range of motor
 	
 downloop ; moves wiper back
 	;Wiper section
-	LDR r0, =GPIOA_BASE
-	MOV r1, #0x88 ;A high, A' low, B low, B' high
+	LDR r0, =GPIOB_BASE
+	MOV r1, #0x1200 ;A low, A' high, B low, B' high
 	STR r1, [r0, #GPIO_ODR]
 	BL movedelay
-	LDR r0, =GPIOA_BASE
-	MOV r1, #0x48 ;A high, A' low, B high, B' low
+	MOV r1, #0x1100 ;A low, A' high, B high, B' low
 	STR r1, [r0, #GPIO_ODR]
 	BL movedelay
-	LDR r0, =GPIOA_BASE
-	MOV r1, #0x44 ;A low, A' high, B high, B' low
+	MOV r1, #0x900 ;A high, A' low, B high, B' low
 	STR r1, [r0, #GPIO_ODR]
 	BL movedelay
-	LDR r0, =GPIOA_BASE
-	MOV r1, #0x84 ;A low, A' high, B low, B' high
+	MOV r1, #0xA00 ;A high, A' low, B low, B' high
 	STR r1, [r0, #GPIO_ODR]
 	BL movedelay
 	
@@ -63,11 +62,24 @@ downloop ; moves wiper back
 		
 movedelay
 	PUSH{r2}
-	MOV r2, #0x999 ;initialize delay
-movedelayinner
+	MOV r2, #0x10000 ;initialize delay
+delayinner
 	SUBS r2, r2, #1 ;subtract 1
 	BPL delayinner ;loop back if > 0
 	POP{r2}
 	BX LR
+	
+MoveInit PROC
+	; Set GPIOB pins 8, 9, 11, 12 as output pins (Motor)
+	LDR r0, =GPIOB_BASE
+	LDR r1, [r0, #GPIO_MODER]
+	BIC r1, #0xFF0000
+	BIC r1, #0xF000000
+	ORR r1, #0x50000
+	ORR r1, #0x1000000
+	ORR r1, #0x400000
+	STR r1, [r0, #GPIO_MODER]
+	BX LR
+	ENDP
 	
 	END
