@@ -2,6 +2,7 @@
 	
 	AREA    Keypad, CODE, READONLY
 	EXPORT	Keypad				; make __main visible to linker
+	EXPORT  KeypadInit
 	
 
 	; Corresponding flag will be updated after completion
@@ -221,5 +222,22 @@ delayloop
 	BNE	delayloop
 	BX LR
 	ENDP
-		
+	
+KeypadInit PROC
+	
+	LDR r0, =GPIOC_BASE ; set pins C0, 1, 2, 3 as output (Keypad)
+	LDR r1, [r0, #GPIO_MODER]
+	BIC r1, #0xFF
+	ORR r1, #0x55
+	STR r1, [r0, #GPIO_MODER]
+	
+	LDR r0, =GPIOB_BASE ; set pins B1, 2, 3, 4 as input (Keypad)
+	LDR r1, [r0, #GPIO_MODER]
+	BIC r1, #0x300
+	BIC r1, #0xFF
+	STR r1, [r0, #GPIO_MODER]
+	
+	BX LR
+	ENDP
+
 	END
