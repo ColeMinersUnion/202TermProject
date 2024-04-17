@@ -23,6 +23,7 @@ keypad PROC
 	LDR r1, [r0, #GPIO_IDR]
 	AND r1, #0x1E
 	CMP r1, #0x1E
+	POPEQ {LR} ;temp
 	BXEQ LR
 	
 		; Pull row 1 low
@@ -76,14 +77,16 @@ keypad PROC
 	AND r1, #0x1E
 	CMP r1, #0x1E
 	BNE checkrow4
+	POP {LR}
 	BX LR  ; else exit
 	
 wait	; Wait until col becomes high
 	;LDR r7, =GPIOB_BASE
-	LDR r1, [r7, #GPIO_IDR]
-	AND r1, r1, r2	; mask col pin, will be 0 if low
-	CMP r1, #0x0		; if col low, loop
-	BEQ wait
+	;LDR r1, [r7, #GPIO_IDR]
+	;AND r1, r1, r2	; mask col pin, will be 0 if low
+	;CMP r1, #0x0		; if col low, loop
+	;BEQ wait
+	BL delay
 	LDR r0, =GPIOC_BASE    ; Reset all rows
 	LDR r1, [r0, #GPIO_ODR]
 	BIC r1, #0xF
