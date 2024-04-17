@@ -25,9 +25,8 @@ void EXTI_Init(void)
 	SYSCFG->EXTICR[0] |= SYSCFG_EXTICR1_EXTI3_PB;
 	SYSCFG->EXTICR[0] &= ~(0x000F);
 	//Set pin 4 of GPIOB as interrupt
-	SYSCFG->EXTICR[0] &= ~SYSCFG_EXTICR2_EXTI4;
-	SYSCFG->EXTICR[0] |= SYSCFG_EXTICR2_EXTI4_PB;
-	SYSCFG->EXTICR[0] &= ~(0x000F);
+	SYSCFG->EXTICR[1] &= ~SYSCFG_EXTICR2_EXTI4;
+	SYSCFG->EXTICR[1] |= SYSCFG_EXTICR2_EXTI4_PB;
 	
 	
 	//Disable rising edge trigger
@@ -73,7 +72,7 @@ void EXTI_Init(void)
 	NVIC_EnableIRQ(EXTI3_IRQn);
 	
 	//Enable EXTI 4 interrupt
-	EXTI->IMR1 |= EXTI_IMR1_IM5;
+	EXTI->IMR1 |= EXTI_IMR1_IM4;
 	//Set priority to 1
 	NVIC_SetPriority(EXTI4_IRQn, 1);
 	//Enable EXTI 4 interrupt
@@ -83,7 +82,7 @@ void EXTI_Init(void)
 void EXTI1_IRQHandler(void)
 {
 	//check interrupt flag
-	if((EXTI->PR1 & EXTI_PR1_PIF1) == EXTI_PR1_PIF1)
+	if((EXTI->PR1 & 0x2) == 0x2)
 	{
 		//interrupt code
 		Keypad();
