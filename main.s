@@ -61,7 +61,14 @@ __main	PROC
 	ORR r1, #0x0000D000
 	ORR r1, #0x00000B00	;set
 	STR r1, [r0, #GPIO_MODER]
-	
+
+ 	LDR r0, =GPIOB_BASE
+	LDR r1, [r0, #GPIO_MODER]
+	ORR r1, #0x10000000
+	ORR r1, #0x00040000
+	ORR r1, #0x00000500
+	STR r1, [r0, #GPIO_MODER]
+	;initializes the b pins for call lights
 	
 
 	;initialize move process
