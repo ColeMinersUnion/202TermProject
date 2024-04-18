@@ -99,10 +99,18 @@ midWhile
 
 	AND r9, r5, #0x0000F000
 	LSR r9, #0xC
+	AND r9, r7
 	CMP r9, r7
 	BEQ openSesame
-
-	B checkAbove
+	
+	MOV r9, r5
+	AND r9, #0x10
+	CMP r9, #0x0
+	BHI openSesame
+	
+	CMP r8, #0x1
+	BEQ checkAbove
+	B checkBelow
 	;CMP r8, #0x1
 	;BNE downFloor
 	;B upFloor
@@ -115,13 +123,13 @@ seven
 	LDR r1, [r0, #GPIO_ODR]
 	BIC r1, #0x1B00
 	CMP r7, #0x8
-	BICEQ r1, #0x100
-	ORREQ r1, #0x1000
+	ORREQ r1, #0x800
 	CMP r7, #0x4
 	ORREQ r1, #0x300
 	CMP r7, #0x2
 	ORREQ r1, #0x200
-	ORRNE r1, #0x100
+	CMP r7, #0x1
+	ORREQ r1, #0x100
 	STR r1, [r0, #GPIO_ODR]	;store onto odr
 	BX LR
 	;this should update the seven segment display
@@ -172,22 +180,20 @@ openSesame		;for when elevator lands on a floor
 downFloor
 	BL direction	;display direction
 	BL MoveDown
+	BIC r5, 0x10    ;clear open door
 	;updates current floor 
-	AND r5, #0xFFF0FFFF
-	LSL r7, #0x9
-	ORR r5, r5, r7
-	BL clearFloor
+	;AND r5, #0xFFF0FFFF
+	LSR r7, #0x1
+	B while
 	;turn on next floor
 	;turn off previous destination and previous calls
 	
 upFloor
 	BL direction	;display direction
 	BL MoveUp
+	BIC r5, 0x10    ;clear open door flag
 	;updates current floor
-	AND r5, #0xFFF0FFFF
-	;LSL r7, #0x11
 	LSL r7, #0x1
-	;BL clearFloor
 	B while
 	;turn on next floor
 	;turn off previous destination and previous calls
@@ -254,8 +260,34 @@ checkAbove
 	B while
 	
 checkBelow
-	MOV r9, r5
-	CMP r7, #0x1
+	MOV r9, r5     ;load flags
+	CMP r7, #0x1   ;if floor one change direction and return
+	EORLS r5, #0x1
+	BXLS LR
+	LSR r9, #0xC   ;shift internal calls to be LSBs
+	AND r9, #0xF   ;mask flags
+	BIC r9, r7     ;clear calls to higher floors
+	BIC r9, r7, LSL #1
+	BIC r9, r7, LSL #2
+	CMP r9, #0x0   ;if any calls, go down
+	BHI downFloor
+	MOV r9, r6     ;check if any down flags below
+	LSR r9, #0x4
+	AND r9, #0xE
+	BIC r9, r7     ;ignore higher floor calls down
+	BIC r9, r7, LSL #1
+	BIC r9, r7, LSL #2
+	CMP r9, #0x0
+	BHI downFloor
+	MOV r9, r6	   ;look for up calls below
+	AND r9, #0x7
+	BIC r9, r7     ;ignore higher floor calls up
+	BIC r9, r7, LSL #1
+	CMP r9, #0x0
+	BHI downFloor
+	EOR r5, #0x1   ;if no calls change direction
+	
+	B while
 	
 	
 callLights
