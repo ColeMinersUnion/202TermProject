@@ -50,10 +50,16 @@ doorclose	PROC
 	;delay loop, holds for some amount of time
 		MOV r2, #0x80       ; range of motor
 		MOV r1, #0x1000000	; delay before door closes
+		BIC r5, #0x20       ; disable close door
 		;this line would compare for the close button and branch straight to motor
 hold	CMP r1, #0
 		BEQ close
 		;if hold has been pressed r5, bit 0x00000010
+		AND r0, r5, #0x20 ;check close door
+		CMP r0, #0x20
+		MOVEQ r1, #0x10000
+		BIC r5, #0x20
+		
 		AND r0, r5, #0x00000010		;mask hold door pin
 		CMP r0, #0x00000010
 		BEQ holdB
