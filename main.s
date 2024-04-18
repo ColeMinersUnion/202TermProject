@@ -15,65 +15,84 @@
 
 
 	INCLUDE core_cm4_constants.s		; Load Constant Definitions
-	INCLUDE stm32l476xx_constants.s      
-
+	INCLUDE stm32l476xx_constants.s 
+	
+	IMPORT 	EXTI_Init
 	IMPORT 	System_Clock_Init
 	IMPORT 	UART2_Init
 	IMPORT	USART2_Write
+	IMPORT  MoveInit
+	IMPORT  MoveUp
+	IMPORT  MoveDown
+	IMPORT  KeypadInit
+	IMPORT  doorOpen
+	IMPORT  doorClose
 	
-	IMPORT doorOpen  ;Changed some code in callum's files
-	IMPORT doorClose
-	IMPORT MoveUp
-	IMPORT MoveDown
-	IMPORT MoveInit
-	IMPORT KeypadInit
-
+	
 	AREA    main, CODE, READONLY
 	EXPORT	__main				; make __main visible to linker
 	ENTRY			
 				
 __main	PROC
 	
+	BL System_Clock_Init
+	BL UART2_Init
+	BL EXTI_Init				; necessary for interrupts
+
+	;LDR r0, =str   ; First argument
+	;MOV r1, #11    ; Second argument
+	;BL USART2_Write
+	
 	;set a8, a9, a11, a12, a14, a15 as output
-	;set b10, 5, 6 15 as output
 	LDR r0, =RCC_BASE
 	LDR r1, [r0, #RCC_AHB2ENR]
-	ORR r1, #0x00000007			;set
+	ORR r1, #0x00000001			;set
 	STR r1, [r0, #RCC_AHB2ENR]
 	
 	LDR r0, =GPIOA_BASE
 	LDR r1, [r0, #GPIO_MODER]
-	ORR r1, #0x0000DB00	;set
-	STR r1, [r0, #GPIO_MODER]
-	
-	LDR r0, =GPIOB_BASE
-	LDR r1, [r0, #GPIO_MODER]
-	ORR r1, #0x00008460	;set
+	BIC r1, #0x03000000
+	BIC r1, #0x00C00000
+	BIC r1, #0x000F0000
+	BIC r1, #0x0000FF00
+	ORR r1, #0x01000000
+	ORR r1, #0x00400000
+	ORR r1, #0x00050000
+	ORR r1, #0x0000D000
+	ORR r1, #0x00000B00	;set
 	STR r1, [r0, #GPIO_MODER]
 	
 	
 
 	;initialize move process
 	BL MoveInit
-	BL KeypadInit
 	;
 	;Variables used by the rest of the program
-	MOV r5, #0x00000000
+	MOV r5, #0x00000001
 	MOV r6, #0x00000000 
+	MOV r7, #0x1
 
-	;using r7 as my working register
-	;r7 now stores the current floor
+;;;;;;;;;;;; YOUR CODE GOES HERE	;;;;;;;;;;;;;;;;;;;
+
+	LDR r0, =RCC_BASE ; enable clock of GPIOA/B/C
+	LDR r1, [r0, #RCC_AHB2ENR]
+	ORR r1, #0x7
+	STR r1, [r0, #RCC_AHB2ENR]
 	
-while AND r7, r5, #0x000F0000		;isolates for just current floor on 7
+	BL KeypadInit
+	BL MoveInit
+	
+while
 	; check if the current floor is a destination
 	; or if it is called in the direction
+	BL seven
 	AND r8, r5, #0x00000001
 	CMP r8, #0x1
 	BNE downFlags
 	B upFlags
 midWhile
 	;flags set onto r9
-	LSR r7, #0x10
+	;LSR r7, #0x10
 	AND r9, r9, r7
 	CMP r9, r7
 	BEQ openSesame
@@ -83,9 +102,10 @@ midWhile
 	CMP r9, r7
 	BEQ openSesame
 
-	CMP r8, #0x1
-	BNE downFloor
-	B upFloor
+	B checkAbove
+	;CMP r8, #0x1
+	;BNE downFloor
+	;B upFloor
 
 	;Update LEDs and character display here
 	;get floor and move onto the appropriate pins A8, A9, A11, A12
@@ -93,13 +113,15 @@ midWhile
 seven 
 	LDR r0, =GPIOA_BASE
 	LDR r1, [r0, #GPIO_ODR]
-	ORR r2, r7, #0x00000003	;store first two bits of interest
-	LSL r2, #0x8			;move from bits 1,0 to bits 8,9
-	ORR r1, r2				;store bits onto 8,9 of r1
-	AND r2, #0x0			;reclear
-	ORR r2, r7, #0x0000000C	;store second two bits of interest
-	LSL r2, #0x9			;move bits 2,3 to 11,12
-	ORR r1, r2				;store bits onto 11,12 of r1
+	BIC r1, #0x1B00
+	CMP r7, #0x8
+	BICEQ r1, #0x100
+	ORREQ r1, #0x1000
+	CMP r7, #0x4
+	ORREQ r1, #0x300
+	CMP r7, #0x2
+	ORREQ r1, #0x200
+	ORRNE r1, #0x100
 	STR r1, [r0, #GPIO_ODR]	;store onto odr
 	BX LR
 	;this should update the seven segment display
@@ -144,6 +166,7 @@ openSesame		;for when elevator lands on a floor
 	BL doorClose	;delay built in to doorClose, no need
 	;update floor call lights
 	BL callLights
+	BL clearFloor
 	B while		;back to start
 	
 downFloor
@@ -162,9 +185,10 @@ upFloor
 	BL MoveUp
 	;updates current floor
 	AND r5, #0xFFF0FFFF
-	LSL r7, #0x11
-	ORR r5, r5, r7
-	BL clearFloor
+	;LSL r7, #0x11
+	LSL r7, #0x1
+	;BL clearFloor
+	B while
 	;turn on next floor
 	;turn off previous destination and previous calls
 
@@ -181,22 +205,58 @@ clearFloor
 	BX LR
 	
 clear4
-	AND r5, #0xFFF7FFFF
+	BIC r5, #0x8000 ;clears internal call
+	BIC r6, #0x80   ;clears down call
 	BX LR
 
 clear3
-	AND r5, #0xFFFBFFFF
+	BIC r5, #0x4000  ;clear internal call
+	CMP r8, #0x1
+	BICEQ r6, #0x4   ;clear up call
+	BICNE r6, #0x40  ;clear down call
 	BX LR
 
 clear2
-	AND r5, #0xFFFDFFFF
+	BIC r5, #0x2000
+	CMP r8, #0x1
+	BICEQ r6, #0x2   ;clear up call
+	BICNE r6, #0x20  ;clear down call
 	BX LR
 
 clear1
-	AND r5, #0xFFFEFFFF
+	BIC r5, #0x1000
+	CMP r8, #0x1
+	BICEQ r6, #0x1   ;clear up call
 	BX LR
 	
-
+checkAbove
+	MOV r9, r5    ;load flags
+	CMP r7, #0x8  ;if floor four change directions
+	EORHS r5, #0x1
+	BXHS LR
+	LSR r9, #0xC  ;shift to be LSBs
+	AND r9, #0xF  ;mask floor flags
+	SUB r9, r9, r7 ;filter out lower floors
+	SUBS r9, r9, r7
+	BPL upFloor   ;if higher floors called up, move up
+	MOV r9, r6    ;load up calls
+	AND r9, #0x7  ;mask up calls
+	CMP r9, #0x1  ;if any greater floor calls up
+	BHI upFloor
+	MOV r9, r6
+	LSR r9, #0x4
+	AND r9, #0xE
+	SUB r9, r7
+	SUBS r9, r7
+	BPL upFloor
+	EOR r5, #0x1   ;if no call above flip direcions
+	
+	B while
+	
+checkBelow
+	MOV r9, r5
+	CMP r7, #0x1
+	
 	
 callLights
 	MOV r3, #0x0
@@ -210,7 +270,10 @@ callLights
 	;all called floors stored on correct spot on r3 now
 	LDR r0, =GPIOB_BASE
 	LDR r1, [r0, #GPIO_ODR]
-	AND r1, #0x7B9F		;clears led bits from ODR
+	AND r1, #0x7000
+	AND r1, #0xB00
+	AND r1, #0x90
+	AND r1, #0xF ;clears led bits from ODR
 	ORR r1, r3			;enables bits that are called
 	STR r1, [r0, #GPIO_ODR]		;turn them on
 	BX LR
@@ -224,6 +287,13 @@ callLights
 
 	AREA myData, DATA, READWRITE
 	ALIGN
-; Replace ECE1770 with your last name
 str DCB "Main",0
+	END
+	ENDP
+	ALIGN			
+
+	AREA    myData, DATA, READWRITE
+	ALIGN
+;str	DCB   "Levine\r\n", 0
+
 	END
