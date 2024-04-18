@@ -294,6 +294,7 @@ callLights
 	MOV r3, #0x00000000
 	ORR r3, r6	;loads r6 onto r3
 	BIC r3, #0xF
+	BIC r3, #0xF00
 	;if all floors are called it should be 
 	;all called floors stored on correct spot on r3 now
 	LDR r0, =GPIOB_BASE			
@@ -302,7 +303,32 @@ callLights
 	BIC r1, #0x8000	;should clear the bits for odr
 	BIC	r1, #0x400
 	BIC r1, #0x60
-	ORR r1, r3			;enables bits that are called
+	
+	AND r3, #0x80	;str call 4
+	ORR r1, r3
+	LSL r1, #0x4
+
+	
+	AND r3, #0x0000
+	ORR r3, r6
+	BIC r3, #0xF
+	BIC r3, #0xF00
+	AND r3, #0x40
+	ORR r1, r3	;str call 3
+	LSL r1, #0x3
+	
+	AND r3, #0x0000
+	ORR r3, r6
+	AND r3, #0x20
+	ORR r1, r3	;str call 2
+	
+	AND r3, #0x0000
+	ORR r3, r6
+	AND r3, #0x10
+	ORR r1, r3	;str call 1
+	
+	LSL r1, #0x1
+	
 	STR r1, [r0, #GPIO_ODR]		;turn them on
 	BX LR
 	
