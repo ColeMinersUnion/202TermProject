@@ -139,20 +139,12 @@ direction
 	;r8 0x0 is down, r8 0x1 is up
 	LDR r0, =GPIOA_BASE
 	LDR r1, [r0, #GPIO_ODR]
+ 	BIC r1, #0xC000
 	CMP r8, #0x0
-	BEQ downlight
+	ORREQ r1, #0x00008000
 	CMP r8, #0x1
-	BEQ uplight
-	
-downlight
-	ORR r1, #0x00008000
-	STR r1, [r0, #GPIO_ODR]
-	BX LR
-	
-uplight
-	ORR r1, #0x00004000
-	STR r1, [r0, #GPIO_ODR]
-	BX LR
+	BEQ r1, #0x000040000
+ 	STR r1, [r0, #GPIO_ODR]
 	
 	
 	
@@ -291,21 +283,17 @@ checkBelow
 	
 	
 callLights
-	MOV r3, #0x0
-	AND r3, r6, #0x00000080	;check if fl4 is called
-	LSL r3, #0x4
-	AND r3, r6, #0x00000040	;check if fl3 called
-	LSL r3, #0x3
-	AND r3, r6, #0x00000020	;check if fl2 called
-	LSL r3, #0x1
-	AND r3, r6, #0x00000010	;check if fl1 called
+	MOV r3, #0x00000000
+	ORR r3, r6	;loads r6 onto r3
+	BIC r3, #0xF
+	;if all floors are called it should be 
 	;all called floors stored on correct spot on r3 now
-	LDR r0, =GPIOB_BASE
+	LDR r0, =GPIOB_BASE			
 	LDR r1, [r0, #GPIO_ODR]
-	AND r1, #0x7000
-	AND r1, #0xB00
-	AND r1, #0x90
-	AND r1, #0xF ;clears led bits from ODR
+	
+	BIC r1, #0x8000	;should clear the bits for odr
+	BIC	r1, #0x400
+	BIC r1, #0x60
 	ORR r1, r3			;enables bits that are called
 	STR r1, [r0, #GPIO_ODR]		;turn them on
 	BX LR
