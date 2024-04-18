@@ -145,6 +145,7 @@ direction
 	CMP r8, #0x1
 	ORREQ r1, #0x000040000
  	STR r1, [r0, #GPIO_ODR]
+  	BX LR
 	
 	
 	
