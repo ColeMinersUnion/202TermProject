@@ -10,59 +10,81 @@
 	; Output pins will be A:B11, A':B12, B:B8, B':B9
 		
 MoveUp PROC
-	
+	PUSH {LR}
 	MOV r3, #0x200 ; Determines range of motor
 	
 uploop
 	;Moves motor up
 	LDR r0, =GPIOB_BASE
-	MOV r1, #0xA00 ;A high, A' low, B low, B' high
+	LDR r1, [r0, #GPIO_ODR]
+	BIC r1, #0x1B00
+	ORR r1, #0xA00 ;A high, A' low, B low, B' high
 	STR r1, [r0, #GPIO_ODR]
 	BL movedelay
-	MOV r1, #0x900 ;A high, A' low, B high, B' low
+	LDR r1, [r0, #GPIO_ODR]
+	BIC r1, #0x1B00
+	ORR r1, #0x900 ;A high, A' low, B high, B' low
 	STR r1, [r0, #GPIO_ODR]
 	BL movedelay
-	MOV r1, #0x1100 ;A low, A' high, B high, B' low
+	LDR r1, [r0, #GPIO_ODR]
+	BIC r1, #0x1B00
+	ORR r1, #0x1100 ;A low, A' high, B high, B' low
 	STR r1, [r0, #GPIO_ODR]
 	BL  movedelay
-	MOV r1, #0x1200 ;A low, A' high, B low, B' high
+	LDR r1, [r0, #GPIO_ODR]
+	BIC r1, #0x1B00
+	ORR r1, #0x1200 ;A low, A' high, B low, B' high
 	STR r1, [r0, #GPIO_ODR]
 	BL movedelay
 	
 	SUBS r3, r3, #0x1
 	BPL uploop
 	
+	POP {LR}
+	BX LR
+	
 	ENDP
 		
 MoveDown PROC
-	
+	PUSH {LR}
 	MOV r3, #0x200 ; Determines range of motor
 	
 downloop ; moves wiper back
 	;Wiper section
 	LDR r0, =GPIOB_BASE
-	MOV r1, #0x1200 ;A low, A' high, B low, B' high
+	LDR r1, [r0, #GPIO_ODR]
+	BIC r1, #0x1B00
+	ORR r1, #0x1200 ;A low, A' high, B low, B' high
 	STR r1, [r0, #GPIO_ODR]
 	BL movedelay
-	MOV r1, #0x1100 ;A low, A' high, B high, B' low
+	LDR r1, [r0, #GPIO_ODR]
+	BIC r1, #0x1B00
+	ORR r1, #0x1100 ;A low, A' high, B high, B' low
 	STR r1, [r0, #GPIO_ODR]
 	BL movedelay
-	MOV r1, #0x900 ;A high, A' low, B high, B' low
+	LDR r1, [r0, #GPIO_ODR]
+	BIC r1, #0x1B00
+	ORR r1, #0x900 ;A high, A' low, B high, B' low
 	STR r1, [r0, #GPIO_ODR]
 	BL movedelay
-	MOV r1, #0xA00 ;A high, A' low, B low, B' high
+	LDR r1, [r0, #GPIO_ODR]
+	BIC r1, #0x1B00
+	ORR r1, #0xA00 ;A high, A' low, B low, B' high
 	STR r1, [r0, #GPIO_ODR]
 	BL movedelay
 	
 	SUBS r3, r3, #0x1
 	BPL downloop
 	
+	POP {LR}
+	BX LR
+	
 	ENDP
 		
 		
 movedelay
 	PUSH{r2}
-	MOV r2, #0x10000 ;initialize delay
+	MOV r2, #0x18000 ;initialize delay
 delayinner
 	SUBS r2, r2, #1 ;subtract 1
 	BPL delayinner ;loop back if > 0
