@@ -12,7 +12,7 @@ keypad PROC
 	PUSH{LR}
 	
 	; Pull all rows low
-	LDR r7, =GPIOB_BASE
+	LDR r10, =GPIOB_BASE
 	LDR r0, =GPIOC_BASE
 	LDR r1, [r0, #GPIO_ODR]
 	BIC r1, #0xF
@@ -81,8 +81,8 @@ keypad PROC
 	BX LR  ; else exit
 	
 wait	; Wait until col becomes high
-	;LDR r7, =GPIOB_BASE
-	;LDR r1, [r7, #GPIO_IDR]
+	;LDR r10, =GPIOB_BASE
+	;LDR r1, [r10, #GPIO_IDR]
 	;AND r1, r1, r2	; mask col pin, will be 0 if low
 	;CMP r1, #0x0		; if col low, loop
 	;BEQ wait
@@ -96,7 +96,7 @@ wait	; Wait until col becomes high
 		
 checkrow1
 
-		LDR r1, [r7, #GPIO_IDR] ; Load input
+		LDR r1, [r10, #GPIO_IDR] ; Load input
 		
 		MOV r2, #0x2 		; Compare to col 1
 		AND r3, r1, r2
@@ -126,7 +126,7 @@ checkrow1
 		
 checkrow2
 
-		LDR r1, [r7, #GPIO_IDR]
+		LDR r1, [r10, #GPIO_IDR]
 		
 		MOV r2, #0x2
 		AND r3, r1, r2
@@ -156,7 +156,7 @@ checkrow2
 		
 checkrow3
 
-		LDR r1, [r7, #GPIO_IDR] ; Load input
+		LDR r1, [r10, #GPIO_IDR] ; Load input
 		
 		MOV r2, #0x2 		; Compare to col 1
 		AND r3, r1, r2
@@ -186,7 +186,7 @@ checkrow3
 		
 checkrow4
 
-		LDR r1, [r7, #GPIO_IDR] ; Load input
+		LDR r1, [r10, #GPIO_IDR] ; Load input
 		
 		MOV r2, #0x2 		; Compare to col 1
 		AND r3, r1, r2
@@ -203,13 +203,17 @@ checkrow4
 		MOV r2, #0x8
 		AND r3, r1, r2
 		CMP r3, #0x0		; Compare to col 3
-		; Unassigned currently, Panic
+		BICEQ r5, #0xF000
+		BICEQ r6, #0xFF
+		ORREQ r6, #0x100
 		BEQ wait			
 		
 		MOV r2, #0x10
 		AND r3, r1, r2
 		CMP r3, #0x0		; Compare to col 4
-		; Unassigned currently, Admin
+		BICEQ r5, #0xF000     ; Admin
+		BICEQ r6, #0xFF
+		ORREQ r5, #0x1000
 		BEQ wait			
 		
 		BX LR
