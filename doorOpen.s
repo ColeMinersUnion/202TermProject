@@ -60,7 +60,7 @@ motor		;branch to teraterm somehwere here???
 		;BL display
 		LDR r0, =GPIOC_BASE
 		LDR r1, [r0, #GPIO_ODR]
-		ORR r1, #0x00000220	;first step, AB'
+		ORR r1, #0x00000300	;first step, A'B'
 		STR r1, [r0, #GPIO_ODR]
 		BL delay
 		AND r1, #0x00000000	;reset
@@ -68,7 +68,7 @@ motor		;branch to teraterm somehwere here???
 		
 		LDR r0, =GPIOC_BASE
 		LDR r1, [r0, #GPIO_ODR]
-		ORR r1, #0x00000060	;second step, AB
+		ORR r1, #0x00000140	;second step, A'B
 		STR r1, [r0, #GPIO_ODR]
 		BL delay
 		AND r1, #0x00000000	;reset
@@ -77,17 +77,15 @@ motor		;branch to teraterm somehwere here???
 		
 		LDR r0, =GPIOC_BASE
 		LDR r1, [r0, #GPIO_ODR]
-		ORR r1, #0x00000140	;third step, A'B
+		ORR r1, #0x00000060	;third step, AB
 		STR r1, [r0, #GPIO_ODR]
 		BL delay
 		AND r1, #0x00000000	;reset
 		STR r1, [r0, #GPIO_ODR]
 
-
-		
 		LDR r0, =GPIOC_BASE
 		LDR r1, [r0, #GPIO_ODR]
-		ORR r1, #0x00000300	;third step, A'B'
+		ORR r1, #0x00000220	;fourth step, AB'
 		STR r1, [r0, #GPIO_ODR]
 		BL delay
 		AND r1, #0x00000000	;reset
